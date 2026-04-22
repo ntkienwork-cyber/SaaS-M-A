@@ -4,7 +4,7 @@ import Facebook from "next-auth/providers/facebook";
 import Apple from "next-auth/providers/apple";
 import Credentials from "next-auth/providers/credentials";
 import { verifyFirebaseToken } from "@/lib/firebase-admin";
-import { upsertUser } from "@/lib/supabase";
+import { upsertUser } from "@/lib/user";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [

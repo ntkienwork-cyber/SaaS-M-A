@@ -1,0 +1,93 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  OWNER
+  INVESTOR
+  ADMIN
+}
+
+enum ListingStatus {
+  ACTIVE
+  INACTIVE
+  SOLD
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  authId    String   @unique @map("auth_id")
+  email     String?  @unique
+  phone     String?  @unique
+  name      String?
+  avatarUrl String?  @map("avatar_url")
+  provider  String
+  role      Role     @default(INVESTOR)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  businessProfile BusinessProfile?
+  interests       Interest[]
+
+  @@map("users")
+}
+
+model BusinessProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique @map("user_id")
+  companyName String   @map("company_name")
+  description String?  @db.Text
+  industry    String?
+  website     String?
+  logoUrl     String?  @map("logo_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listings Listing[]
+
+  @@map("business_profiles")
+}
+
+model Listing {
+  id                String        @id @default(cuid())
+  businessProfileId String        @map("business_profile_id")
+  title             String
+  description       String        @db.Text
+  askingPrice       Decimal?      @map("asking_price") @db.Decimal(15, 2)
+  annualRevenue     Decimal?      @map("annual_revenue") @db.Decimal(15, 2)
+  industry          String?
+  location          String?
+  status            ListingStatus @default(ACTIVE)
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  interests       Interest[]
+
+  @@map("listings")
+}
+
+model Interest {
+  id         String   @id @default(cuid())
+  listingId  String   @map("listing_id")
+  investorId String   @map("investor_id")
+  message    String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  listing  Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  investor User    @relation(fields: [investorId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, investorId])
+  @@map("interests")
+}
