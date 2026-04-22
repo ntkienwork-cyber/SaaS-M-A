@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
 import { FilterBar, type Filters } from "@/components/listings/filter-bar";
 import { ListingsGrid } from "@/components/listings/listings-grid";
 import { Pagination } from "@/components/listings/pagination";
@@ -24,6 +25,10 @@ const DEFAULT_FILTERS: Filters = {
 };
 
 export default function HomePage() {
+  const { data: session } = useSession();
+  const role = session?.user?.role;
+  const dashboardHref = role === "OWNER" ? "/dashboard" : "/my-interests";
+
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [page, setPage] = useState(1);
   const [result, setResult] = useState<ListingsPage | null>(null);
@@ -68,18 +73,37 @@ export default function HomePage() {
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           <span className="text-lg font-bold tracking-tight">BizConnect</span>
           <nav className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/signup"
-              className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Sign up
-            </Link>
+            {session ? (
+              <>
+                <Link
+                  href={dashboardHref}
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {role === "OWNER" ? "Dashboard" : "My interests"}
+                </Link>
+                <button
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="rounded-md border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/signup"
+                  className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       </header>

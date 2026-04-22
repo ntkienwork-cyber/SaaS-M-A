@@ -5,6 +5,7 @@ import Apple from "next-auth/providers/apple";
 import Credentials from "next-auth/providers/credentials";
 import { verifyFirebaseToken } from "@/lib/firebase-admin";
 import { upsertUser } from "@/lib/user";
+import { prisma } from "@/lib/prisma";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -67,6 +68,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id!;
         token.phone = (user as { phone?: string | null }).phone ?? null;
+
+        const dbUser = await prisma.user.findUnique({
+          where: { authId: user.id! },
+          select: { role: true },
+        });
+        token.role = dbUser?.role ?? "INVESTOR";
       }
       return token;
     },
@@ -74,6 +81,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, token }) {
       session.user.id = token.id;
       session.user.phone = token.phone ?? null;
+      session.user.role = (token.role as string) ?? "INVESTOR";
       return session;
     },
   },
