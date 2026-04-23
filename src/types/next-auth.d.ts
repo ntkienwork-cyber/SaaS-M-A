@@ -14,7 +14,8 @@ declare module "next-auth" {
   }
 }
 
-declare module "next-auth/jwt" {
+// next-auth v5 (beta) resolves JWT from @auth/core/jwt
+declare module "@auth/core/jwt" {
   interface JWT {
     id: string;
     phone?: string | null;
