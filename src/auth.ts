@@ -1,26 +1,14 @@
 import NextAuth from "next-auth";
-import Google from "next-auth/providers/google";
-import Facebook from "next-auth/providers/facebook";
-import Apple from "next-auth/providers/apple";
 import Credentials from "next-auth/providers/credentials";
+import { authConfig } from "@/auth.config";
 import { verifyFirebaseToken } from "@/lib/firebase-admin";
 import { upsertUser } from "@/lib/user";
 import { prisma } from "@/lib/prisma";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-    Facebook({
-      clientId: process.env.FACEBOOK_CLIENT_ID!,
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
-    }),
-    Apple({
-      clientId: process.env.APPLE_CLIENT_ID!,
-      clientSecret: process.env.APPLE_CLIENT_SECRET!,
-    }),
+    ...authConfig.providers,
     Credentials({
       id: "phone",
       name: "Phone",
@@ -44,8 +32,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
-
-  session: { strategy: "jwt" },
 
   callbacks: {
     async signIn({ user, account }) {
@@ -84,10 +70,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.role = (token.role as string) ?? "INVESTOR";
       return session;
     },
-  },
-
-  pages: {
-    signIn: "/login",
-    error: "/login",
   },
 });
